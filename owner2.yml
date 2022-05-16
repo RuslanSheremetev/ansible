@@ -52,7 +52,7 @@
            - js
            - m
            - style.css
-
+           - index.html
        - name: gen index.html
          template: src={{ src_copy }}/index.j2 dest={{ dest_copy }}/index.html
          notify:
