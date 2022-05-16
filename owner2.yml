@@ -1,0 +1,73 @@
+- hosts: hosts
+  become: yes
+  vars:
+    path_delate: /var/www
+    src_copy: /home/r/html
+    dest_copy: /var/www
+  tasks:
+  - name: os_family
+    debug: var=ansible_os_family
+
+  - block: #For Debian
+      - name: Install nginx
+        apt: name="{{ item }}" state=latest
+        loop:
+          - nginx
+          - mysql-server
+        notify: Server apt
+
+      - name: Delate
+        file: path={{ path_delate }} state=absent
+
+
+      - name: Copy directory
+        copy: src={{ src_copy }} dest={{ dest_copy }}
+
+      - name: Who is owner
+        debug:
+          msg: "Owner is {{ owner }}"
+
+    when: ansible_os_family=="Debian"
+
+  - block: #For REDHAT
+       - name: Install nginx
+         yum: name={{ item }} state=latest
+         loop:
+           - nginx
+           - mysql-server
+
+         notify: Server yum
+
+       - name: Delate
+         file: path={{ path_delate }} state=absent
+
+
+       - name: Copy directory
+         copy: src={{ src_copy }}/{{ item }} dest={{ dest_copy }}
+         loop:
+           - css
+           - fonts
+           - html
+           - img
+           - js
+           - m
+           - style.css
+
+       - name: gen index.html
+         template: src={{ src_copy }}/index.j2 dest={{ dest_copy }}/index.html
+         notify:
+          - Server apt
+          - Server yum
+
+       - name: Who is owner
+         debug:
+           msg: "Owner is {{ owner }}"
+
+    when: ansible_os_family=="RedHat"
+
+  handlers:
+  - name: "Server apt"
+    service: name=nginx state=restarted enabled=yes
+
+  - name: "Server yum"
+    service: name=nginx state=restarted enabled=yes
